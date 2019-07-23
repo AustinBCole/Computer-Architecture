@@ -52,10 +52,11 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.register[reg_a] += self.register[reg_b]
         #elif op == "SUB": etc
+        elif op == "MUL":
+            self.register[reg_a] *= self.register[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -100,7 +101,7 @@ class CPU:
                         converted = int(num, 2)
                         self.random_access_memory[address] = converted
                         address += 1
-            
+
         # Expect the unexpected, code defensively.
         except FileNotFoundError:
                     print(f"{sys.argv[0]}: {ssys.argv[1]} not found")
@@ -114,8 +115,9 @@ class CPU:
         HLT = 0b00000001
         PRN = 0b01000111
         LDI = 0b10000010
+        MUL = 0b10100010
         """Run the CPU."""
-        while True:
+        while self.random_access_memory[self.pc] != 0 :
             self.ir.append(self.random_access_memory[self.pc])
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
@@ -125,9 +127,13 @@ class CPU:
             if op_code == HLT:
                 break
             elif op_code == PRN:
-                print(self.random_access_memory[operand_a])
+                print(self.register[operand_a])
                 self.pc += 2
             elif op_code == LDI:
-                self.random_access_memory[operand_a] = operand_b
+                self.register[operand_a] = operand_b
                 self.pc += 3
+            elif op_code == MUL:
+                self.alu("MUL", operand_a, operand_b)
+                self.pc += 3
+
 CPU().run()
