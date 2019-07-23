@@ -85,9 +85,32 @@ class CPU:
     def ram_write(self, address, value):
         self.random_access_memory[address] = value
     
+    def load_file(self):
+        address = 0
+        # This opens a file, goes through every line of the file and prints that line
+        if len(sys.argv) != 2:
+            print(f"usage: {sys.argv[0]} filename")
+            sys.exit(1)
+        try:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    num = line.split("#", 1)[0]
+                
+                    if num.strip() != '':
+                        converted = int(num, 2)
+                        self.random_access_memory[address] = converted
+                        address += 1
+            
+        # Expect the unexpected, code defensively.
+        except FileNotFoundError:
+                    print(f"{sys.argv[0]}: {ssys.argv[1]} not found")
+                    # In unix land, 0 exit status meanst that the program succeeded in working, non-zero means that it failed in some way.
+                    sys.exit(2)
+
+    
 
     def run(self):
-        self.load()
+        self.load_file()
         HLT = 0b00000001
         PRN = 0b01000111
         LDI = 0b10000010
