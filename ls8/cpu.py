@@ -27,6 +27,41 @@ class CPU:
             sp = self.stack[0]
         else:
             sp = self.random_access_memory[0xF4]
+        self.branch_table = {}
+
+    def HLT_func(self):
+        sys.exit(0)
+    
+    def PRN_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        value = self.register[operand_a]
+        print(value)
+        self.pc += 2
+    
+    def LDI_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+        self.register[operand_a] = operand_b
+        self.pc += 3
+
+    def MUL_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+        self.alu("MUL", operand_a, operand_b)
+        self.pc += 3
+
+    def set_up_branch_table(self):
+        HLT = 0b00000001
+        PRN = 0b01000111
+        LDI = 0b10000010
+        MUL = 0b10100010
+        self.branch_table = {
+            HLT: self.HLT_func,
+            PRN: self.PRN_func,
+            LDI: self.LDI_func,
+            MUL: self.MUL_func
+        }
+        return
 
     def load(self):
         """Load a program into memory."""
@@ -52,10 +87,11 @@ class CPU:
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
-
         if op == "ADD":
-            self.reg[reg_a] += self.reg[reg_b]
+            self.register[reg_a] += self.register[reg_b]
         #elif op == "SUB": etc
+        elif op == "MUL":
+            self.register[reg_a] *= self.register[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -85,26 +121,40 @@ class CPU:
     def ram_write(self, address, value):
         self.random_access_memory[address] = value
     
+    def load_file(self):
+        address = 0
+        # This opens a file, goes through every line of the file and prints that line
+        if len(sys.argv) != 2:
+            print(f"usage: {sys.argv[0]} filename")
+            sys.exit(1)
+        try:
+            with open(sys.argv[1]) as f:
+                for line in f:
+                    num = line.split("#", 1)[0]
+                
+                    if num.strip() != '':
+                        converted = int(num, 2)
+                        self.random_access_memory[address] = converted
+                        address += 1
+
+        # Expect the unexpected, code defensively.
+        except FileNotFoundError:
+                    print(f"{sys.argv[0]}: {ssys.argv[1]} not found")
+                    # In unix land, 0 exit status meanst that the program succeeded in working, non-zero means that it failed in some way.
+                    sys.exit(2)
+
+    
 
     def run(self):
-        self.load()
-        HLT = 0b00000001
-        PRN = 0b01000111
-        LDI = 0b10000010
+        self.set_up_branch_table()
+        self.load_file()
         """Run the CPU."""
-        while True:
+        while self.random_access_memory[self.pc] != 0 :
             self.ir.append(self.random_access_memory[self.pc])
-            operand_a = self.ram_read(self.pc + 1)
-            operand_b = self.ram_read(self.pc + 2)
         
             op_code = self.random_access_memory[self.pc]
-        
-            if op_code == HLT:
-                break
-            elif op_code == PRN:
-                print(self.random_access_memory[operand_a])
-                self.pc += 2
-            elif op_code == LDI:
-                self.random_access_memory[operand_a] = operand_b
-                self.pc += 3
+            self.branch_table[op_code]()
+
+
+
 CPU().run()
