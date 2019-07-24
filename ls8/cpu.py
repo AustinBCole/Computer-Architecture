@@ -27,6 +27,41 @@ class CPU:
             sp = self.stack[0]
         else:
             sp = self.random_access_memory[0xF4]
+        self.branch_table = {}
+
+    def HLT_func(self):
+        sys.exit(0)
+    
+    def PRN_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        value = self.register[operand_a]
+        print(value)
+        self.pc += 2
+    
+    def LDI_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+        self.register[operand_a] = operand_b
+        self.pc += 3
+
+    def MUL_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+        self.alu("MUL", operand_a, operand_b)
+        self.pc += 3
+
+    def set_up_branch_table(self):
+        HLT = 0b00000001
+        PRN = 0b01000111
+        LDI = 0b10000010
+        MUL = 0b10100010
+        self.branch_table = {
+            HLT: self.HLT_func,
+            PRN: self.PRN_func,
+            LDI: self.LDI_func,
+            MUL: self.MUL_func
+        }
+        return
 
     def load(self):
         """Load a program into memory."""
@@ -111,29 +146,15 @@ class CPU:
     
 
     def run(self):
+        self.set_up_branch_table()
         self.load_file()
-        HLT = 0b00000001
-        PRN = 0b01000111
-        LDI = 0b10000010
-        MUL = 0b10100010
         """Run the CPU."""
         while self.random_access_memory[self.pc] != 0 :
             self.ir.append(self.random_access_memory[self.pc])
-            operand_a = self.ram_read(self.pc + 1)
-            operand_b = self.ram_read(self.pc + 2)
         
             op_code = self.random_access_memory[self.pc]
-        
-            if op_code == HLT:
-                break
-            elif op_code == PRN:
-                print(self.register[operand_a])
-                self.pc += 2
-            elif op_code == LDI:
-                self.register[operand_a] = operand_b
-                self.pc += 3
-            elif op_code == MUL:
-                self.alu("MUL", operand_a, operand_b)
-                self.pc += 3
+            self.branch_table[op_code]()
+
+
 
 CPU().run()
