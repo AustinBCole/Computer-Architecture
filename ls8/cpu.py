@@ -18,21 +18,29 @@ class CPU:
         self.g = 0
         # This flag is used to indicate equality between values
         self.e = 0
-        # This is temporary memory
-        self.stack = []
         # This is the instruction register, it contains a copy of the currently executing instruction
         self.ir = []
-        if len(self.stack) > 0:
-            # This is the stack pointer. It points to the top item of the stack. If there is not a top item of the stack, it points to 0xF4, which is the address in memory that stores the most recently pressed key. The beginning of the stack is 0xF5.
-            sp = self.stack[0]
-        else:
-            sp = self.random_access_memory[0xF4]
+        # This is the stack pointer. It points to the top item of the stack. If there is not a top item of the stack, it points to 0xF4, which is the address in memory that stores the most recently pressed key. The beginning of the stack is 0xF5.
+        self.sp = 0xF5
         self.branch_table = {}
 
+    def PUSH_func(self):
+        self.sp -= 1
+        operand_a = self.random_access_memory[self.pc + 1]
+        self.random_access_memory[self.sp] = self.register[operand_a]
+        self.pc += 2
+    
+    def POP_func(self):
+        operand_a = self.random_access_memory[self.pc + 1]
+        self.register[operand_a] = self.random_access_memory[self.sp]
+        self.sp += 1
+        self.pc += 2
+    
     def HLT_func(self):
         sys.exit(0)
     
     def PRN_func(self):
+        
         operand_a = self.ram_read(self.pc + 1)
         value = self.register[operand_a]
         print(value)
@@ -55,11 +63,15 @@ class CPU:
         PRN = 0b01000111
         LDI = 0b10000010
         MUL = 0b10100010
+        PUSH = 0b01000101
+        POP = 0b01000110
         self.branch_table = {
             HLT: self.HLT_func,
             PRN: self.PRN_func,
             LDI: self.LDI_func,
-            MUL: self.MUL_func
+            MUL: self.MUL_func,
+            PUSH: self.PUSH_func,
+            POP: self.POP_func
         }
         return
 
@@ -151,7 +163,6 @@ class CPU:
         """Run the CPU."""
         while self.random_access_memory[self.pc] != 0 :
             self.ir.append(self.random_access_memory[self.pc])
-        
             op_code = self.random_access_memory[self.pc]
             self.branch_table[op_code]()
 
