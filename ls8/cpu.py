@@ -23,7 +23,7 @@ class CPU:
         # This is the instruction register, it contains a copy of the currently executing instruction
         self.ir = []
         if len(self.stack) > 0:
-            # This is the stack pointer. It points to the top item of the stack. If there is not a top item of the stack, it points to 0xF4, which is the address in memory that stores the most recently pressed key.
+            # This is the stack pointer. It points to the top item of the stack. If there is not a top item of the stack, it points to 0xF4, which is the address in memory that stores the most recently pressed key. The beginning of the stack is 0xF5.
             sp = self.stack[0]
         else:
             sp = self.random_access_memory[0xF4]
