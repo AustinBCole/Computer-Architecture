@@ -24,6 +24,28 @@ class CPU:
         self.sp = 0xF5
         self.branch_table = {}
 
+    def CALL_func(self):
+        # Decrement the stack pointer
+        self.sp -= 1
+        # Get the address of the instruction right affter CALL instruction and CALL operand instruction
+        ret_addr = self.pc + 2
+        # Push the address onto the stack
+        self.random_access_memory[self.sp] = ret_addr
+        # Get the operand
+        operand_a = self.random_access_memory[self.pc + 1]
+        # Set pc to operand_a index of the register, which is an address to jump to the subroutine
+        self.pc = self.register[operand_a]
+    
+    def RET_func(self):
+        print("here")
+        # Get the return address
+        ret_addr = self.random_access_memory[self.sp]
+        # Increment the stack pointer
+        self.sp += 1
+        # Store address in PC
+        self.pc = ret_addr
+    
+    
     def PUSH_func(self):
         self.sp -= 1
         operand_a = self.random_access_memory[self.pc + 1]
@@ -59,6 +81,8 @@ class CPU:
         self.pc += 3
 
     def set_up_branch_table(self):
+        CALL = 0b01010000
+        RET = 0b00010001
         HLT = 0b00000001
         PRN = 0b01000111
         LDI = 0b10000010
@@ -71,7 +95,9 @@ class CPU:
             LDI: self.LDI_func,
             MUL: self.MUL_func,
             PUSH: self.PUSH_func,
-            POP: self.POP_func
+            POP: self.POP_func,
+            RET: self.RET_func,
+            CALL: self.CALL_func
         }
         return
 
