@@ -37,7 +37,6 @@ class CPU:
         self.pc = self.register[operand_a]
     
     def RET_func(self):
-        print("here")
         # Get the return address
         ret_addr = self.random_access_memory[self.sp]
         # Increment the stack pointer
@@ -73,6 +72,12 @@ class CPU:
         operand_b = self.ram_read(self.pc + 2)
         self.register[operand_a] = operand_b
         self.pc += 3
+    
+    def ADD_func(self):
+        operand_a = self.ram_read(self.pc + 1)
+        operand_b = self.ram_read(self.pc + 2)
+        self.alu("ADD", operand_a, operand_b)
+        self.pc += 3
 
     def MUL_func(self):
         operand_a = self.ram_read(self.pc + 1)
@@ -87,6 +92,7 @@ class CPU:
         PRN = 0b01000111
         LDI = 0b10000010
         MUL = 0b10100010
+        ADD = 0b10100000
         PUSH = 0b01000101
         POP = 0b01000110
         self.branch_table = {
@@ -94,6 +100,7 @@ class CPU:
             PRN: self.PRN_func,
             LDI: self.LDI_func,
             MUL: self.MUL_func,
+            ADD: self.ADD_func,
             PUSH: self.PUSH_func,
             POP: self.POP_func,
             RET: self.RET_func,
@@ -191,7 +198,3 @@ class CPU:
             self.ir.append(self.random_access_memory[self.pc])
             op_code = self.random_access_memory[self.pc]
             self.branch_table[op_code]()
-
-
-
-CPU().run()
