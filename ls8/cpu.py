@@ -19,6 +19,57 @@ class CPU:
         self.sp = 0xF5
         self.branch_table = {}
 
+    def CMP_func(self):
+        # Get the two operands
+        operand_a = self.random_access_memory[self.pc + 1]
+        operand_b = self.random_access_memory[self.pc + 2]
+        # Get the two values from registers
+        register_a = self.register[operand_a]
+        register_b = self.register[operand_b]
+        # subtract one operand from the other
+        # If the result is 0
+        if register_a - register_b == 0:
+            # Set the equal bit to 1
+            self.fl = 0b00000001
+        # Else if the result if positive
+        elif register_a - register_b > 0:
+            # Set the greater than bit to 1
+            self.fl = 0b00000010
+        # Else
+        elif register_a - register_b < 0:
+            # Set the less than bit to 1
+            self.fl = 0b00000100
+        else:
+            self.fl = 0b00000000
+        self.pc += 3
+    
+    def JMP_func(self):
+        # Get register value
+        operand_a = self.random_access_memory[self.pc + 1]
+        register_value = self.register[operand_a]
+        # Set pc to register value, which is new address
+        self.pc = register_value
+
+    def JEQ_func(self):
+        if self.fl == 0b00000001:
+            self.JMP_func()
+        else:
+            self.pc += 2
+#        else:
+#            # Get address from register and jump to it
+#            operand_a = self.random_access_memory[self.pc + 1]
+#            self.pc = self.register[operand_a]
+
+    def JNE_func(self):
+        if self.fl == 0b00000010 or self.fl == 0b00000100:
+            self.JMP_func()
+        else:
+            self.pc += 2
+#        else:
+#            # Get address from register and jump to it
+#            operand_a = self.random_access_memory[self.pc + 1]
+#            self.pc = self.register[operand_a]
+
     def CALL_func(self):
         # Decrement the stack pointer
         self.sp -= 1
@@ -39,12 +90,12 @@ class CPU:
         # Store address in PC
         self.pc = ret_addr
     
-    def ST_func(self):
-        operand_a = pc + 1
-        operand_b = pc + 2
-        self.random_access_memory[operand_a] = self.register[break]
-        pc += 3
-    
+#    def ST_func(self):
+#        operand_a = pc + 1
+#        operand_b = pc + 2
+#        self.random_access_memory[self.register[operand_a]] = self.register[operand_b]
+#        pc += 3
+
     def PUSH_func(self):
         self.sp -= 1
         operand_a = self.random_access_memory[self.pc + 1]
@@ -95,6 +146,10 @@ class CPU:
         ADD = 0b10100000
         PUSH = 0b01000101
         POP = 0b01000110
+        CMP = 0b10100111
+        JMP = 0b01010100
+        JNE = 0b01010110
+        JEQ = 0b01010101
         self.branch_table = {
             HLT: self.HLT_func,
             PRN: self.PRN_func,
@@ -104,7 +159,11 @@ class CPU:
             PUSH: self.PUSH_func,
             POP: self.POP_func,
             RET: self.RET_func,
-            CALL: self.CALL_func
+            CALL: self.CALL_func,
+            CMP: self.CMP_func,
+            JMP: self.JMP_func,
+            JNE: self.JNE_func,
+            JEQ: self.JEQ_func
         }
         return
 
