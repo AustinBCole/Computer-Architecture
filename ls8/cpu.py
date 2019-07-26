@@ -11,7 +11,7 @@ class CPU:
         self.random_access_memory = [0b00000000] * 256
         self.pc = 0
         # This is a flag
-        self.fl = 0b0000
+        self.fl = 0b00000000
         # This flag is used to indicate less-than
         self.l = 0
         # This flag is used to indicate greater-than
@@ -44,6 +44,11 @@ class CPU:
         # Store address in PC
         self.pc = ret_addr
     
+    def ST_func(self):
+        operand_a = pc + 1
+        operand_b = pc + 2
+        self.random_access_memory[operand_a] = self.register[break]
+        pc += 3
     
     def PUSH_func(self):
         self.sp -= 1
